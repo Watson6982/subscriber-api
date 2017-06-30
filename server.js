@@ -38,6 +38,21 @@ app.use('/', routes);
 app.use('/api', apiRoutes);
 app.use('/docs', docRoutes);
 
+const subscription = PubSub.subscription('joshua-watson'); // References an existing subscription, e.g. "my-subscription"
+// Pulls messages. Set returnImmediately to false to block until messages are received.
+setInterval(function(){
+  subscription.pull()
+  .then((results) => {
+    const messages = results[0];
+    console.log(`Received ${messages.length} messages.`);
+    messages.forEach((message) => {
+      console.log(`* %d %j %j`, message.id, message.data, message.attributes);
+      console.log(message.data.username);
+    });
+    return subscription.ack(messages.map((message) => message.ackId)); // Acknowledges received messages. If you do not acknowledge, Pub/Sub will redeliver the message.
+  });
+}, 60 * 1000);
+
 // run the server
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
