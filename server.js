@@ -8,7 +8,14 @@ var apiRoutes = require('./routes/api.js');
 var docRoutes = require('./routes/docs.js');
 var routes = require('./routes/site.js');
 
-const PORT = process.env.PORT || 3000;
+//database
+var mongoose = require('mongoose');
+var Message = require('./models/message');
+mongoose.Promise = global.Promise;
+mongoose.connect('mongodb://localhost/nationwise_db');
+
+//webpage
+const PORT = process.env.PORT || 3001;
 
 var app = express();
 app.set('views', __dirname + '/views');
@@ -44,13 +51,28 @@ setInterval(function(){
   subscription.pull()
   .then((results) => {
     const messages = results[0];
+    
     console.log(`Received ${messages.length} messages.`);
+    
     messages.forEach((message) => {
       console.log(`* %d %j %j`, message.id, message.data, message.attributes);
+    
+      // Save each pub sub message to the mongo db
+      var message = new Message ({
+        	messageId: message.id,
+        	message: JSON.stringify(message.data)
+        }).save();
     });
-    return subscription.ack(messages.map((message) => message.ackId)); // Acknowledges received messages. If you do not acknowledge, Pub/Sub will redeliver the message.
+
+    // Acknowledges received messages. If you do not acknowledge, Pub/Sub will
+    // redeliver the message.
+    if (messages.length > 0) {
+      return subscription.ack(messages.map((message) => message.ackId)); // Acknowledges received messages. If you do not acknowledge, Pub/Sub will redeliver the message.
+    } else {
+      return;
+    }
   });
-}, 60 * 1000);
+}, 60 * 100);
 
 // run the server
 app.listen(PORT, () => {
