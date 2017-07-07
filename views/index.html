@@ -7,7 +7,10 @@
 	<div class="container">
 		<ul>
 			{% for message in data %}
-			<li>{{message.messageId}}, {{message.message}}</li>
+				<h1> {{loop.index}}</h1>
+				{%for key, value in message%}
+					<li>{{key}} {{value}}</li>
+				{% endfor %}
 			{% endfor %}
 		</ul>
 	</div>
